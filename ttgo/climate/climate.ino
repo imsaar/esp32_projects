@@ -4,6 +4,7 @@
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 TFT_eSPI tft = TFT_eSPI();
 bool sensorFound = false;
+unsigned long startTime = 0;
 
 bool readSHTC3Data(float* temperature, float* humidity) {
   sensors_event_t humidityEvent, tempEvent;
@@ -22,32 +23,39 @@ void setup() {
   Serial.println("LILYGO T-Display Climate Monitor");
   
   tft.init();
-  tft.setRotation(1);
+  tft.setRotation(0);  // Vertical orientation (128x160)
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   
+  tft.setTextSize(2);
+  tft.drawString("Climate", 10, 10);
+  tft.drawString("Monitor", 10, 35);
   tft.setTextSize(1);
-  tft.drawString("Climate Monitor", 5, 5);
-  tft.drawString("Initializing...", 5, 25);
+  tft.drawString("Initializing...", 10, 70);
   
   // Initialize I2C and SHTC3 sensor
   Wire.begin(21, 22);
+  startTime = millis();  // Record startup time
   
   if (shtc3.begin()) {
     Serial.println("SHTC3 sensor initialized");
     sensorFound = true;
     
     tft.fillScreen(TFT_BLACK);
+    tft.setTextSize(2);
     tft.setTextColor(TFT_GREEN);
-    tft.drawString("SHTC3 Ready!", 5, 10);
+    tft.drawString("SHTC3", 20, 20);
+    tft.drawString("Ready!", 20, 45);
     delay(1000);
   } else {
     Serial.println("SHTC3 sensor not found");
     sensorFound = false;
     
     tft.fillScreen(TFT_BLACK);
+    tft.setTextSize(2);
     tft.setTextColor(TFT_RED);
-    tft.drawString("SHTC3 Not Found!", 5, 10);
+    tft.drawString("SHTC3", 15, 20);
+    tft.drawString("Error!", 15, 45);
     while(1) delay(1000);
   }
 }
@@ -64,25 +72,64 @@ void loop() {
     
     tft.fillScreen(TFT_BLACK);
     
-    tft.setTextSize(1);
+    // Header
+    tft.setTextSize(2);
     tft.setTextColor(TFT_CYAN);
-    tft.drawString("Climate Monitor", 5, 5);
+    tft.drawString("Climate", 15, 10);
     
+    // Temperature section
     tft.setTextSize(2);
     tft.setTextColor(TFT_YELLOW);
-    tft.drawString("Temp:", 5, 30);
-    tft.drawString(String(temperature, 1) + "C", 5, 50);
+    tft.drawString("Temp", 10, 50);
     
+    tft.setTextSize(3);
+    String tempStr = String(temperature, 1);
+    tft.drawString(tempStr, 15, 75);
+    
+    tft.setTextSize(2);
+    tft.drawString("C", 95, 85);
+    
+    // Humidity section  
+    tft.setTextSize(2);
     tft.setTextColor(TFT_GREEN);
-    tft.drawString("Humidity:", 5, 80);
-    tft.drawString(String(humidity, 1) + "%", 5, 100);
+    tft.drawString("Humid", 10, 115);
+    
+    tft.setTextSize(3);
+    String humStr = String(humidity, 0);  // No decimal for humidity
+    tft.drawString(humStr, 15, 135);
+    
+    tft.setTextSize(2);
+    tft.drawString("%", 85, 145);
+    
+    // Add timestamp at bottom
+    unsigned long currentTime = millis();
+    unsigned long uptime = (currentTime - startTime) / 1000;  // Convert to seconds
+    
+    tft.setTextSize(1);
+    tft.setTextColor(TFT_WHITE);
+    
+    // Format uptime as HH:MM:SS
+    int hours = uptime / 3600;
+    int minutes = (uptime % 3600) / 60;
+    int seconds = uptime % 60;
+    
+    String timeStr = "";
+    if (hours < 10) timeStr += "0";
+    timeStr += String(hours) + ":";
+    if (minutes < 10) timeStr += "0";
+    timeStr += String(minutes) + ":";
+    if (seconds < 10) timeStr += "0";
+    timeStr += String(seconds);
+    
+    tft.drawString("Up: " + timeStr, 5, 150);
   } else {
     Serial.println("Failed to read SHTC3 sensor");
     
     tft.fillScreen(TFT_BLACK);
-    tft.setTextSize(1);
+    tft.setTextSize(2);
     tft.setTextColor(TFT_RED);
-    tft.drawString("Sensor Error", 5, 5);
+    tft.drawString("Sensor", 20, 60);
+    tft.drawString("Error", 25, 85);
   }
   
   delay(2000);
