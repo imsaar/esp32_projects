@@ -4,7 +4,7 @@
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 TFT_eSPI tft = TFT_eSPI();
 bool sensorFound = false;
-unsigned long startTime = 0;
+unsigned long lastReadTime = 0;
 
 bool readSHTC3Data(float* temperature, float* humidity) {
   sensors_event_t humidityEvent, tempEvent;
@@ -35,7 +35,7 @@ void setup() {
   
   // Initialize I2C and SHTC3 sensor
   Wire.begin(21, 22);
-  startTime = millis();  // Record startup time
+  lastReadTime = millis();  // Record initialization time
   
   if (shtc3.begin()) {
     Serial.println("SHTC3 sensor initialized");
@@ -61,76 +61,75 @@ void setup() {
 }
 
 void loop() {
-  float temperature, humidity;
+  // Calculate countdown to next refresh (10 second intervals)
+  unsigned long currentTime = millis();
+  unsigned long timeSinceLastRead = currentTime - lastReadTime;
+  int countdown = 10 - (timeSinceLastRead / 1000);
+  if (countdown <= 0) countdown = 10;
   
-  if (readSHTC3Data(&temperature, &humidity)) {
-    Serial.print("Temperature: ");
-    Serial.print(temperature, 1);
-    Serial.print("°C, Humidity: ");
-    Serial.print(humidity, 1);
-    Serial.println("%");
+  float temperature, humidity;
+  static float lastTemp = 0, lastHum = 0;  // Store last good readings
+  
+  // Try to read sensor data every 10 seconds
+  if (timeSinceLastRead >= 10000) {
+    lastReadTime = currentTime;
     
-    tft.fillScreen(TFT_BLACK);
-    
-    // Header
-    tft.setTextSize(2);
-    tft.setTextColor(TFT_CYAN);
-    tft.drawString("Climate", 15, 10);
-    
-    // Temperature section
-    tft.setTextSize(2);
-    tft.setTextColor(TFT_YELLOW);
-    tft.drawString("Temp", 10, 50);
-    
-    tft.setTextSize(3);
-    String tempStr = String(temperature, 1);
-    tft.drawString(tempStr, 15, 75);
-    
-    tft.setTextSize(2);
-    tft.drawString("C", 95, 85);
-    
-    // Humidity section  
-    tft.setTextSize(2);
-    tft.setTextColor(TFT_GREEN);
-    tft.drawString("Humid", 10, 115);
-    
-    tft.setTextSize(3);
-    String humStr = String(humidity, 0);  // No decimal for humidity
-    tft.drawString(humStr, 15, 135);
-    
-    tft.setTextSize(2);
-    tft.drawString("%", 85, 145);
-    
-    // Add timestamp at bottom
-    unsigned long currentTime = millis();
-    unsigned long uptime = (currentTime - startTime) / 1000;  // Convert to seconds
-    
-    tft.setTextSize(1);
-    tft.setTextColor(TFT_WHITE);
-    
-    // Format uptime as HH:MM:SS
-    int hours = uptime / 3600;
-    int minutes = (uptime % 3600) / 60;
-    int seconds = uptime % 60;
-    
-    String timeStr = "";
-    if (hours < 10) timeStr += "0";
-    timeStr += String(hours) + ":";
-    if (minutes < 10) timeStr += "0";
-    timeStr += String(minutes) + ":";
-    if (seconds < 10) timeStr += "0";
-    timeStr += String(seconds);
-    
-    tft.drawString("Up: " + timeStr, 5, 150);
+    if (readSHTC3Data(&temperature, &humidity)) {
+      lastTemp = temperature;
+      lastHum = humidity;
+      
+      // Arduino Serial Plotter format: Temperature:value,Humidity:value
+      Serial.print("Temperature:");
+      Serial.print(temperature, 1);
+      Serial.print(",Humidity:");
+      Serial.println(humidity, 1);
+    } else {
+      Serial.println("Failed to read SHTC3 sensor - using last values");
+      temperature = lastTemp;
+      humidity = lastHum;
+    }
   } else {
-    Serial.println("Failed to read SHTC3 sensor");
-    
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextSize(2);
-    tft.setTextColor(TFT_RED);
-    tft.drawString("Sensor", 20, 60);
-    tft.drawString("Error", 25, 85);
+    // Use last readings between updates
+    temperature = lastTemp;
+    humidity = lastHum;
   }
   
-  delay(2000);
+  tft.fillScreen(TFT_BLACK);
+  
+  // Header
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_CYAN);
+  tft.drawString("Climate", 15, 10);
+  
+  // Temperature section
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_YELLOW);
+  tft.drawString("Temp", 10, 45);
+  
+  tft.setTextSize(3);
+  String tempStr = String(temperature, 1);
+  tft.drawString(tempStr, 15, 65);
+  
+  tft.setTextSize(2);
+  tft.drawString("C", 95, 75);
+  
+  // Humidity section  
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_GREEN);
+  tft.drawString("Humid", 10, 95);
+  
+  tft.setTextSize(3);
+  String humStr = String(humidity, 0);  // No decimal for humidity
+  tft.drawString(humStr, 15, 115);
+  
+  tft.setTextSize(2);
+  tft.drawString("%", 85, 125);
+  
+  // Countdown to next refresh
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_MAGENTA);
+  tft.drawString("Next:", 10, 140);
+  tft.drawString(String(countdown) + "s", 70, 140);
+  
+  delay(100);  // Faster updates for smooth countdown
 }

@@ -7,7 +7,8 @@ A simple temperature and humidity monitoring project for the LILYGO T-Display ES
 - Real-time temperature and humidity readings from SHTC3 sensor
 - Large, easy-to-read display optimized for vertical orientation
 - Color-coded display (yellow for temperature, green for humidity)
-- Serial monitoring for data logging
+- 10-second refresh interval with countdown timer
+- Serial monitoring for data logging and Arduino IDE Serial Plotter
 - Automatic sensor initialization and error handling
 
 ## Hardware Requirements
@@ -54,6 +55,7 @@ The project uses vertical orientation (128×160 pixels) for optimal readability:
 │    Humid        │ ← Size 2, Green label
 │     45   %      │ ← Size 3 number + Size 2 unit
 │                 │
+│    Next: 7s     │ ← Size 2, Magenta countdown
 └─────────────────┘
 ```
 
@@ -64,6 +66,7 @@ The project uses vertical orientation (128×160 pixels) for optimal readability:
 - **Good spacing** - More room between sections  
 - **Integer humidity** - No decimal places for cleaner look  
 - **Color coding** - Yellow temperature, Green humidity
+- **Countdown timer** - Shows seconds until next sensor reading
 
 ## Usage
 
@@ -75,20 +78,27 @@ The project uses vertical orientation (128×160 pixels) for optimal readability:
 
 ## Serial Monitor Output
 
-The project provides basic serial logging at 115200 baud:
+The project provides serial output at 115200 baud in two modes:
 
+### Standard Logging:
 ```
 LILYGO T-Display Climate Monitor
 SHTC3 sensor initialized
-Temperature: 23.4°C, Humidity: 45.2%
-Temperature: 23.5°C, Humidity: 45.1%
+```
+
+### Arduino IDE Serial Plotter Format:
+```
+Temperature:23.4,Humidity:45.2
+Temperature:23.5,Humidity:45.1
 ...
 ```
+
+The Serial Plotter format allows real-time graphing of both temperature and humidity values in the Arduino IDE Serial Plotter (Tools → Serial Plotter).
 
 ## Code Structure
 
 - `setup()` - Initializes display, I2C bus, and SHTC3 sensor
-- `loop()` - Reads sensor data every 2 seconds and updates display
+- `loop()` - Reads sensor data every 10 seconds and updates display with countdown
 - `readSHTC3Data()` - Handles sensor communication and data retrieval
 
 ## Troubleshooting
@@ -112,7 +122,7 @@ Temperature: 23.5°C, Humidity: 45.1%
 ## Technical Specifications
 
 - **Sensor**: SHTC3 (I2C address 0x70)
-- **Update Rate**: 2 seconds
+- **Update Rate**: 10 seconds with countdown display
 - **Temperature Range**: -40°C to +80°C display range
 - **Humidity Range**: 0% to 100% RH
 - **Display**: 160×128 pixel color TFT
