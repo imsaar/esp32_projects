@@ -5,9 +5,13 @@ A simple temperature and humidity monitoring project for the LILYGO T-Display ES
 ## Features
 
 - Real-time temperature and humidity readings from SHTC3 sensor
-- Large, easy-to-read display optimized for vertical orientation
+- Dual display modes: textual (vertical) and graphical (horizontal) views
+- Button toggle between display modes with immediate response
+- Large, easy-to-read textual display optimized for vertical orientation
+- Graphical trend view with line charts showing last 10 readings
 - Color-coded display (yellow for temperature, green for humidity)
-- 10-second refresh interval with countdown timer
+- 30-second sensor refresh with 2-second display updates and countdown timer
+- Immediate first reading on startup, then 30-second intervals
 - Serial monitoring for data logging and Arduino IDE Serial Plotter
 - Automatic sensor initialization and error handling
 
@@ -43,7 +47,9 @@ Connect the SHTC3 sensor to the T-Display as follows:
 
 ## Display Layout
 
-The project uses vertical orientation (128×160 pixels) for optimal readability:
+The project has two display modes:
+
+### Textual View (Vertical - 128×160 pixels):
 
 ```
 ┌─────────────────┐
@@ -55,17 +61,40 @@ The project uses vertical orientation (128×160 pixels) for optimal readability:
 │    Humid        │ ← Size 2, Green label
 │     45   %      │ ← Size 3 number + Size 2 unit
 │                 │
-│    Next: 7s     │ ← Size 2, Magenta countdown
+│ Next Refresh    │ ← Size 2, Magenta label
+│     23   s      │ ← Size 3 number + Size 2 unit
 └─────────────────┘
 ```
 
+### Graphical View (Horizontal - 160×128 pixels):
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Climate Graph    T:23.4C  H:45%  Next: 23s                 │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │                Temperature Trend (Yellow)               │ │
+│ │     /\    /\                                            │ │
+│ │    /  \  /  \                                           │ │
+│ │   /    \/    \                                          │ │
+│ │ ─────────────────────────────────────────────────────── │ │
+│ │                Humidity Trend (Green)                   │ │
+│ │      /\      /\                                         │ │
+│ │     /  \    /  \                                        │ │
+│ │    /    \  /    \                                       │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ### Display Features:
-- **Vertical orientation** - Better use of T-Display shape  
-- **Large numbers** - Size 3 font for temperature/humidity values  
-- **Clear labels** - "Temp" and "Humid" with size 2 font  
-- **Good spacing** - More room between sections  
+- **Dual view modes** - Toggle between textual and graphical displays
+- **Right button toggle** - Press right button (GPIO 35) to switch views instantly
+- **Textual view** - Large numbers with size 3 font for easy reading
+- **Graphical view** - Line charts showing trends over last 10 readings
+- **Auto-orientation** - Vertical for text, horizontal for graphs
+- **History tracking** - Stores last 10 sensor readings for trend analysis
+- **Clear labels** - Consistent size 2 font for all labels
 - **Integer humidity** - No decimal places for cleaner look  
-- **Color coding** - Yellow temperature, Green humidity
+- **Color coding** - Yellow temperature, Green humidity, Magenta countdown
+- **Immediate response** - Button presses change view instantly
 - **Countdown timer** - Shows seconds until next sensor reading
 
 ## Usage
@@ -73,8 +102,12 @@ The project uses vertical orientation (128×160 pixels) for optimal readability:
 1. **Upload the code** to your LILYGO T-Display
 2. **Connect the SHTC3 sensor** according to the wiring diagram
 3. **Power on** - The display will show "Climate Monitor" and "Initializing..."
-4. **If successful** - Display shows "SHTC3 Ready!" then starts showing readings
+4. **If successful** - Display shows "SHTC3 Ready!" then immediately shows first reading
 5. **If failed** - Display shows "SHTC3 Error!" - check wiring
+6. **Toggle views** - Press the right button to switch between textual and graphical displays
+7. **View modes**:
+   - **Textual**: Large numbers in vertical orientation
+   - **Graphical**: Trend charts in horizontal orientation showing last 10 readings
 
 ## Serial Monitor Output
 
@@ -97,9 +130,12 @@ The Serial Plotter format allows real-time graphing of both temperature and humi
 
 ## Code Structure
 
-- `setup()` - Initializes display, I2C bus, and SHTC3 sensor
-- `loop()` - Reads sensor data every 10 seconds and updates display with countdown
+- `setup()` - Initializes display, I2C bus, button, and SHTC3 sensor
+- `loop()` - Main control loop with immediate first reading, then 30-second intervals
 - `readSHTC3Data()` - Handles sensor communication and data retrieval
+- `drawTextualView()` - Renders large-text vertical display
+- `drawGraphicalView()` - Renders trend charts in horizontal orientation
+- Button handling with debouncing and immediate view switching
 
 ## Troubleshooting
 
@@ -122,7 +158,11 @@ The Serial Plotter format allows real-time graphing of both temperature and humi
 ## Technical Specifications
 
 - **Sensor**: SHTC3 (I2C address 0x70)
-- **Update Rate**: 10 seconds with countdown display
+- **First Reading**: Immediate on startup
+- **Sensor Reading**: 30 seconds after first successful reading
+- **Display Update**: 2 seconds for smooth countdown animation
+- **Button Response**: Immediate view toggle (50ms polling)
+- **History Storage**: Last 10 readings for graphical trends
 - **Temperature Range**: -40°C to +80°C display range
 - **Humidity Range**: 0% to 100% RH
 - **Display**: 160×128 pixel color TFT

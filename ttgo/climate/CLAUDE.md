@@ -4,62 +4,72 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a LILYGO T-Display ESP32 climate monitoring project that displays temperature and humidity readings from an SHTC3 sensor on the built-in TFT display.
+LILYGO T-Display ESP32 climate monitoring project that displays real-time temperature and humidity readings from an SHTC3 sensor with a countdown timer showing time until next sensor refresh.
 
 ## Hardware Architecture
 
 **Target Hardware**: LILYGO T-Display ESP32 development board
 - **Display**: 160×128 pixel color TFT (ST7789 controller via TFT_eSPI library)
-- **Orientation**: Vertical (setRotation(0)) for better readability
-- **Sensor**: SHTC3 temperature/humidity sensor via I2C
-- **I2C Configuration**: SDA=GPIO21, SCL=GPIO22, 100kHz clock
+- **Orientation**: Vertical (setRotation(0)) for better use of display shape
+- **Sensor**: SHTC3 temperature/humidity sensor via I2C (address 0x70)
+- **I2C Configuration**: SDA=GPIO21, SCL=GPIO22
 
 ## Development Environment
 
 **Arduino IDE Setup**:
-- Board: "ESP32 Dev Module" or "LILYGO T-Display" 
-- Required Libraries:
-  - TFT_eSPI (display driver)
-  - Adafruit_SHTC3 (sensor library)
+- Board: "ESP32 Dev Module" or "LILYGO T-Display"
+- Required Libraries: TFT_eSPI (display), Adafruit_SHTC3 (sensor)
+- Serial Monitor: 115200 baud
 
-**Build Command**: Use Arduino IDE "Upload" button or CLI equivalent
-**Serial Monitor**: 115200 baud for debugging output
+**Build/Upload**: Use Arduino IDE "Upload" button or arduino-cli equivalent
 
 ## Code Architecture
 
-**Single-file Arduino sketch** (`climate.ino`) with three main components:
+**Single-file Arduino sketch** (`climate.ino`) with timing-based sensor management:
 
-1. **Sensor Interface** (`readSHTC3Data()`):
-   - Uses Adafruit_SHTC3 library's event-based API
-   - Returns temperature and humidity via pointer parameters
-   - Handles sensor communication errors gracefully
+1. **Dual Refresh System**:
+   - Sensor readings: Every 30 seconds (reduces I2C traffic, extends sensor life)
+   - Display updates: Every 2 seconds (smooth countdown animation)
+   - Uses `lastReadTime` and `millis()` for non-blocking timing
 
-2. **Display Management** (in `setup()` and `loop()`):
-   - Vertical layout optimized for T-Display dimensions
-   - Color-coded sections: Cyan header, Yellow temperature, Green humidity
-   - Large fonts (size 3) for primary values, size 2 for labels/units
-   - Error states display red text and halt execution
+2. **Sensor Interface** (`readSHTC3Data()`):
+   - Event-based API using `sensors_event_t` structures
+   - Graceful error handling with fallback to last known values
+   - Serial output in Arduino Serial Plotter format: "Temperature:value,Humidity:value"
 
-3. **Main Control Flow**:
-   - `setup()`: One-time initialization of display, I2C bus, and sensor
-   - `loop()`: 2-second cycle of sensor reading and display updates
-   - Sensor failures in setup() are fatal (infinite loop)
-   - Sensor failures in loop() show error state but continue running
+3. **Display Layout** (optimized for vertical 128×160):
+   - Header: "Climate" (Cyan, size 2)
+   - Temperature: "Temp" + large number + "C" (Yellow, size 3 for number)
+   - Humidity: "Humid" + large number + "%" (Green, size 3 for number)
+   - Countdown: "Next Refresh" + large number + "s" (Magenta, size 3 for number)
 
-## Hardware Integration Notes
+4. **Error Handling Strategy**:
+   - Setup failures: Fatal error display with infinite loop
+   - Runtime failures: Continue with last good readings, log to serial
 
-**I2C Sensor Communication**:
-- SHTC3 uses I2C address 0x70 (fixed)
-- Sensor initialization failure in setup() stops execution
-- Runtime sensor failures display "Sensor Error" but don't halt
+## Serial Output Modes
 
-**Display Layout Strategy**:
-- Designed for vertical viewing of the T-Display
-- Temperature shows 1 decimal place, humidity shows integers
-- Strategic positioning to avoid text overflow on 128-pixel width
+**Arduino Serial Plotter Compatible**: 
+- Format: `Temperature:23.4,Humidity:45.2`
+- Access via Tools → Serial Plotter in Arduino IDE
+- Enables real-time graphing of both sensors simultaneously
 
-## Common Development Tasks
+**Standard Logging**: Basic initialization and error messages
 
-**Testing Sensor Communication**: Check Serial Monitor output at 115200 baud
-**Display Layout Changes**: Modify positioning values in loop() display sections
-**Sensor Error Handling**: All I2C failures are logged to serial with descriptive messages
+## Display Layout Strategy
+
+**Vertical Orientation Benefits**:
+- Better fit for T-Display aspect ratio (taller than wide)
+- Larger fonts possible with more vertical space
+- Multi-line countdown display with consistent font sizing
+
+**Font Hierarchy**:
+- Size 3: All numeric values (temperature, humidity, countdown)
+- Size 2: All labels and units
+- Consistent visual hierarchy across all readings
+
+## Timing Architecture
+
+**30-Second Sensor Cycle**: Reduces I2C communication frequency for sensor longevity
+**2-Second Display Cycle**: Provides smooth countdown experience
+**Non-blocking Design**: Uses `millis()` comparison instead of `delay()` blocking
