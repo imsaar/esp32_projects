@@ -61,17 +61,17 @@ void setup() {
 }
 
 void loop() {
-  // Calculate countdown to next refresh (10 second intervals)
+  // Calculate countdown to next refresh (30 second intervals)
   unsigned long currentTime = millis();
   unsigned long timeSinceLastRead = currentTime - lastReadTime;
-  int countdown = 10 - (timeSinceLastRead / 1000);
-  if (countdown <= 0) countdown = 10;
+  int countdown = 30 - (timeSinceLastRead / 1000);
+  if (countdown <= 0) countdown = 30;
   
   float temperature, humidity;
   static float lastTemp = 0, lastHum = 0;  // Store last good readings
   
-  // Try to read sensor data every 10 seconds
-  if (timeSinceLastRead >= 10000) {
+  // Try to read sensor data every 30 seconds
+  if (timeSinceLastRead >= 30000) {
     lastReadTime = currentTime;
     
     if (readSHTC3Data(&temperature, &humidity)) {
@@ -128,8 +128,13 @@ void loop() {
   // Countdown to next refresh
   tft.setTextSize(2);
   tft.setTextColor(TFT_MAGENTA);
-  tft.drawString("Next:", 10, 140);
-  tft.drawString(String(countdown) + "s", 70, 140);
+  tft.drawString("Next Refresh", 10, 140);
   
-  delay(100);  // Faster updates for smooth countdown
+  tft.setTextSize(3);
+  tft.drawString(String(countdown), 15, 160);
+  
+  tft.setTextSize(2);
+  tft.drawString("s", 85, 170);
+  
+  delay(2000);  // Update display every 2 seconds
 }
