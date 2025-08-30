@@ -24,6 +24,9 @@
 
 #define WIFI_SSID ""
 #define WIFI_PASSWORD ""
+
+#include <home_wifi.h>
+
 // Defining the WiFi channel speeds up the connection:
 #define WIFI_CHANNEL 6
 
@@ -93,7 +96,7 @@ bool isDST(int year, int month, int day) {
   }
 }
 
-unsigned long getSeattleTime() {
+unsigned long getUSPacificTime() {
   unsigned long utcTime = timeClient.getEpochTime();
   
   // Get current date components to check for DST
@@ -111,7 +114,7 @@ unsigned long getSeattleTime() {
 }
 
 String getPacificTimeString(unsigned long epochTime) {
-  // Convert epoch time to Seattle/Pacific Time string with DST handling
+  // Convert epoch time to US Pacific Time string with DST handling
   time_t rawtime = epochTime;
   struct tm * timeinfo = gmtime(&rawtime);
   
@@ -120,8 +123,8 @@ String getPacificTimeString(unsigned long epochTime) {
   return String(timeStr);
 }
 
-String getCurrentSeattleTimeString() {
-  unsigned long seattleTime = getSeattleTime();
+String getCurrentPacificTimeString() {
+  unsigned long seattleTime = getUSPacificTime();
   return getPacificTimeString(seattleTime);
 }
 
@@ -152,7 +155,7 @@ void collectData() {
     if (tempF != -999 && humidity != -999) {
       temperatureHistory[currentIndex] = tempF;
       humidityHistory[currentIndex] = humidity;
-      timeHistory[currentIndex] = getSeattleTime(); // Store Seattle time with DST
+      timeHistory[currentIndex] = getUSPacificTime(); // Store Pacific time with DST
       
       currentIndex = (currentIndex + 1) % MAX_READINGS;
       if (currentIndex == 0) dataFull = true;
@@ -399,7 +402,7 @@ void sendHtml() {
                 <span class="sensor-value">HUMIDITY_VALUE%</span>
               </div>
             </div>
-            <div class="last-reading">Last reading: LAST_READING_TIME Seattle time</div>
+            <div class="last-reading">Last reading: LAST_READING_TIME US Pacific time</div>
           </div>
 
           <div class="chart-container">
