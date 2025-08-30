@@ -22,8 +22,8 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 
-#define WIFI_SSID "YOUR_WIFI_SSID"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define WIFI_SSID "Casa786"
+#define WIFI_PASSWORD "2063621471"
 // Defining the WiFi channel speeds up the connection:
 #define WIFI_CHANNEL 6
 
@@ -444,7 +444,7 @@ void sendHtml() {
               data: {
                 labels: data.labels,
                 datasets: [{
-                  label: 'Temperature (&deg;F)',
+                  label: 'Temperature (F)',
                   data: data.temperature,
                   borderColor: 'rgb(255, 99, 132)',
                   backgroundColor: 'rgba(255, 99, 132, 0.1)',
