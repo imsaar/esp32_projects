@@ -22,8 +22,8 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 
-#define WIFI_SSID "Casa786"
-#define WIFI_PASSWORD "2063621471"
+#define WIFI_SSID ""
+#define WIFI_PASSWORD ""
 // Defining the WiFi channel speeds up the connection:
 #define WIFI_CHANNEL 6
 
@@ -483,7 +483,7 @@ void sendHtml() {
                     position: 'left',
                     title: {
                       display: true,
-                      text: 'Temperature (°F)'
+                      text: 'Temperature (F)'
                     },
                     beginAtZero: false,
                     min: function(context) {
