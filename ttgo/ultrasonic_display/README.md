@@ -11,7 +11,7 @@ An ESP32-based distance meter using a TTGO T-Display, HC-SR04 ultrasonic sensor,
 | Servo signal | GPIO 27 |
 | Servo power | 5V |
 | Servo ground | GND |
-| HC-SR04 VCC | 5V |
+| HC-SR04 VCC | 3.3V |
 | HC-SR04 GND | GND |
 
 ## Wiring Diagram
@@ -19,7 +19,7 @@ An ESP32-based distance meter using a TTGO T-Display, HC-SR04 ultrasonic sensor,
 ```
 TTGO T-Display          HC-SR04
 ─────────────           ───────
-5V         ────────────  VCC
+3.3V       ────────────  VCC
 GND        ────────────  GND
 GPIO 2     ────────────  TRIG
 GPIO 15    ────────────  ECHO
